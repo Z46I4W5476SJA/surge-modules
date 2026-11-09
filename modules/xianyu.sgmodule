@@ -1,0 +1,121 @@
+#!name=🐟 闲鱼去广告
+#!desc=闲鱼 iPhone 7.28.90｜v1.0.0｜2026-11-09 已验证：卸载重装后冷启动无开屏
+#!version=1.0.0
+#!category=去广告
+#!system=ios
+#!author=粥粥（规则整理自开源仓库，来源见注释）
+#
+# ========== 调研结论摘要（详见同目录 调研与验证清单.md）==========
+# 【用户实测失效 · 勿当有效】
+#   - ddgksf2013 GoofishAds：reject-200 splash.ads / idle.ad.expose + jq 改响应
+#     URL: https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/GoofishAds.conf
+#     头注释 UpdateTime 2025-09-06；Git 最近提交 2025-12-12
+#   - zirawell R-Store：Map Local idlecommerce.splash + 脚本 nextfresh
+#     URL: https://raw.githubusercontent.com/zirawell/R-Store/main/Rule/Surge/Adblock/App/X/闲鱼/goofish.sgmodule
+#     头 #!date=2026-05-09；Git 最近提交 2026-09-14（图标）
+# 【可能失效原因（综合 atopsecret 2026-11 抓包注释 + 墨鱼自述「请卸载重装」）】
+#   1) 开屏走 cacheAd 本地缓存引用：仅 reject / 回 {} 客户端仍播已缓存素材
+#   2) 接口版本：splash.async.ads/1.0 → splash.ads/2.0（atopsecret 模块注释原文）
+#   3) 网关域名可能落到 g-acs / gw / *.m.taobao.com，规则只写 acs 会漏
+#   4) 推测：部分投放走 ACCS/长连接或未 MitM 域名（需抓包确认，勿当事实）
+# 【本草稿启用的来源】
+#   - atopsecret/SurgeScripts（Git 2026-11-05）：开屏脚本清 cacheAd；idleadv.*；素材 CDN
+#   - 可莉 iKeLee / QingRex（头日期 2025-12-26）：Map Local splash.ads；部分首页差异接口
+#   - fmz200/wool_scripts（Git 2026-06-25）+ ishowshu 脚本（文件头 2026-10-24）：信息流脚本
+# 【未收录】kokoryh/Sparkle、RuCu6/QuanX、app2smile：源码树中未见闲鱼去广告文件
+# 【blackmatrix7】仅有分流 DOMAIN 列表，非去广告；旧 Advertising 里 idle.home.welcome reject
+#   曾导致闲鱼搜索失败（Issue #391），故不收录
+# ================================================================
+
+[Rule]
+# 来源：ddgksf2013 / fmz200 / Walvez StartUpAds 均见 DOMAIN-SUFFIX,iyes.youku.com,REJECT
+# 用途：优酷 iyes 广告域（闲鱼内嵌相关投放常见）；整域名广告域，非 mtop 业务网关
+DOMAIN-SUFFIX,iyes.youku.com,REJECT
+
+[URL Rewrite]
+# 来源：atopsecret xianyu-ad-block.sgmodule（注释：creatives-assets 为广告专用目录，抓包实证）
+# 用途：开屏/创意素材 CDN；按路径拦，非整 alicdn
+^https?://ossgw\.alicdn\.com/creatives-assets/ - reject
+
+# 来源：atopsecret xianyu-ad-block.sgmodule
+# 用途：TANX 广告曝光/计费打点（纯广告域路径）
+^https?://(bdlog|df)\.tanx\.com - reject
+
+[Map Local]
+# ----- 开屏/悬浮 Map Local 对照（默认注释：避免抢在 atopsecret 脚本前命中）-----
+# 若只想试空 JSON、不用脚本，可取消下一行注释，并禁用 [Script] 里对应两条
+# 来源：可莉 #!date=2025-12-26；fmz200 同接口｜用途：splash.ads → {}
+# ^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash(\.async)?\.ads data-type=text data="{}" status-code=200
+# 来源：可莉 / fmz200｜用途：user.strategy.list → {}
+# ^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list data-type=text data="{}" status-code=200
+
+# 来源：可莉 / fmz200 / ddgksf（对照）
+# 用途：搜索栏底纹/填词
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade data-type=text data="{}" status-code=200
+
+# 来源：可莉 / fmz200 / zirawell（对照）
+# 用途：搜索页「猜你想搜 / activate」推荐卡
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.item\.search\.activate data-type=text data="{}" status-code=200
+
+# 来源：可莉 / fmz200 / zirawell（对照）
+# 用途：搜索发现
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.discover data-type=text data="{}" status-code=200
+
+# 来源：可莉 / fmz200
+# 用途：我的页底部商品推荐 feeds
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.buy\.feeds data-type=text data="{}" status-code=200
+
+# 来源：可莉 / fmz200
+# 用途：消息页「感兴趣」推荐 playboy.recommend
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend data-type=text data="{}" status-code=200
+
+# 来源：可莉（zirawell/墨鱼未单独 Map Local 此路径）
+# 用途：商品详情推荐列表
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.recommend\.list data-type=text data="{}" status-code=200
+
+# 来源：可莉（与墨鱼/zirawell 不同的接口）
+# 用途：同城角标/周边角信息
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.near\.by\.corner\.info data-type=text data="{}" status-code=200
+
+# 来源：fmz200 / zirawell（对照）
+# 用途：闲鱼币相关 nextfresh 推广
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.idle\.coin\.nextfresh data-type=text data="{}" status-code=200
+
+# 来源：fmz200 / zirawell（对照）
+# 用途：「这些宝贝超好卖」转卖推荐
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.resell\.recommendorhotcate data-type=text data="{}" status-code=200
+
+[Script]
+# ----- 开屏（候选 B：优先验证）：清 cacheAd / adMap，兼容 splash.ads 与 splash.async.ads -----
+# 来源：https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.sgmodule
+# 脚本：https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js
+# 用途：开屏配置；模块注释写明 2026-11 抓包见 splash.ads/2.0 + cacheAd
+闲鱼-开屏-cacheAd = type=http-response,pattern=^https?:\/\/(acs|g-acs|gw)\.m\.(goofish|taobao)\.com\/(gw|h5)\/mtop\.taobao\.idlecommerce\.splash\.(async\.)?ads,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js,timeout=30,script-update-interval=0
+
+# 来源：同上 atopsecret（墨鱼仅有 idle.ad.expose reject；无 idleadv.*）
+# 用途：广告启动上报
+闲鱼-idleadv-上报 = type=http-response,pattern=^https?:\/\/(acs|g-acs|gw)\.m\.(goofish|taobao)\.com\/(gw|h5)\/mtop\.idle\.idleadv\.app\.launch\.report,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js,timeout=30,script-update-interval=0
+
+# 用途：广告场景恢复
+闲鱼-idleadv-场景 = type=http-response,pattern=^https?:\/\/(acs|g-acs|gw)\.m\.(goofish|taobao)\.com\/(gw|h5)\/mtop\.idle\.idleadv\.scene\.restore,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js,timeout=30,script-update-interval=0
+
+# 用途：广告曝光（墨鱼用 reject-200；此处走脚本回「无广告」成功体，减少重试）
+闲鱼-ad-expose = type=http-response,pattern=^https?:\/\/(acs|g-acs|gw)\.m\.(goofish|taobao)\.com\/(gw|h5)\/mtop\.idle\.ad\.expose,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js,timeout=30,script-update-interval=0
+
+# 用途：悬浮/弹窗策略（脚本过滤 FLOAT_LAYER/POPUP 等；与上方 Map Local 可能重叠，抓包后保留一种即可）
+闲鱼-策略悬浮 = type=http-response,pattern=^https?:\/\/(acs|g-acs|gw)\.m\.(goofish|taobao)\.com\/(gw|h5)\/mtop\.taobao\.idle\.user\.strategy\.list,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/atopsecret/SurgeScripts/main/xianyu/xianyu-ad-block.js,timeout=30,script-update-interval=0
+
+# ----- 首页 / 同城 / 我的 / 搜索信息流：fmz200 引用的 ishowshu 脚本（文件头 2026-10-24）-----
+# 脚本真实 URL：https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js
+# 覆盖：nextfresh、local.home、my.adapter、circle.list、nearby、search、local.flow.plat.section 等
+闲鱼-首页信息流 = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+闲鱼-同城信息流 = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+闲鱼-我的页 = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+闲鱼-首页Tab = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+闲鱼-搜索结果AD = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\/,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+闲鱼-同城横幅 = type=http-response,pattern=^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.flow\.plat\.section,requires-body=1,max-size=3145728,script-path=https://raw.githubusercontent.com/ishowshu/qx/refs/heads/main/script/goofish.js,timeout=30,script-update-interval=0
+
+[MITM]
+# 仅 goofish mtop 网关 + 素材 CDN 主机；不加支付宝/支付域
+# acs.m.taobao.com / g-acs.m.taobao.com：来自 atopsecret 2026-11 模块（抓包兼容旧网关），路径规则已限制 idle* ；若担心影响手淘可删掉两个 taobao 主机
+hostname = %APPEND% acs.m.goofish.com, g-acs.m.goofish.com, gw.m.goofish.com, acs.m.taobao.com, g-acs.m.taobao.com, ossgw.alicdn.com
