@@ -1,0 +1,108 @@
+#!name=京东去广告
+#!desc=京东 iPhone 16.1.50｜v1.0.0｜2026-11-09 已验证：卸载重装后冷启动无开屏
+#!version=1.0.0
+#!category=去广告
+#!system=ios
+#!author=粥粥（规则整理自开源仓库，来源见注释）
+#
+# ========== 调研结论摘要（详见同目录 research.md）==========
+# 【目标版本】京东 iPhone 16.1.50（com.360buy.jdmobile）
+# 【协议变更 · 源已核实】京东 App ≥15.9.50：
+#   - client.action 的 functionId 从 URL query 迁到 base64 POST body
+#   - 响应体整体 base64；开屏 functionId：start → startup
+#   来源：https://github.com/zbsdsb/loon-adblock-plugins README（验证日期 2026-08-12）
+# 【用户既往失效经验】ddgksf2013 / zirawell R-Store 对闲鱼开屏常失效；京东侧同类 URL 正则同理会失配
+# 【本草稿启用】
+#   A. 主路径（新协议必须）：zbsdsb JD_remove_ads_v2.js
+#      拦截全部 client.action 响应 → 按内容特征清 images/floorList/floors → 原格式回写
+#   B. 辅路径（旧协议/仍带 URL functionId 时）：Map Local 若干广告 functionId → {}
+#   C. 纯广告域 DOMAIN REJECT（无需依赖 functionId）
+# 【明确不收录】
+#   - ms.jr.jd.com / *.jr.jd.com / pay.m.jd.com / jdpay / wallet（金融/支付）
+#   - DOMAIN REJECT mapi.m.jd.com、dns.jd.com（可能伤核心/HTTPDNS，见 research）
+#   - 整域拒 api.m.jd.com（业务网关）
+# 【未收录/未见独立京东去广告文件】kokoryh/Sparkle、app2smile/rules、ddgksf2013/Rewrite/AdBlock
+#   （ddgksf 仅在 startingad 合集里有 start|queryMaterialAdverts reject）
+# ================================================================
+
+[Rule]
+# ----- 纯广告 / 监测域（多源共识；非整业务网关）-----
+# 来源：zirawell jd.sgmodule #!date=2026-05-20；fmz200 blockAds.module #!date=2026-10-30
+DOMAIN-SUFFIX,jzt.jd.com,REJECT
+DOMAIN-SUFFIX,bdsp.x.jd.com,REJECT
+DOMAIN,bdsp-x.jd.com,REJECT
+DOMAIN,dsp-x.jd.com,REJECT
+DOMAIN-SUFFIX,c-nfa.jd.com,REJECT
+DOMAIN-SUFFIX,cm.jd.com,REJECT
+DOMAIN-SUFFIX,du.jd.com,REJECT
+DOMAIN-SUFFIX,jddebug.com,REJECT
+DOMAIN-SUFFIX,ad.3.cn,REJECT
+DOMAIN-SUFFIX,jd.c-ptsp.com.cn,REJECT
+
+# 来源：fmz200 / zirawell｜用途：京准通相关统计域（非支付）
+# 若发现异常可注释
+DOMAIN-SUFFIX,jdqd.jd.com,REJECT
+
+# ----- 以下默认注释：风险较高或争议 -----
+# 来源：fmz200｜可能影响部分商品图（AWAvenue #197 称 img-x 为图片 CDN）
+# DOMAIN-SUFFIX,img-x.jd.com,REJECT
+# 来源：fmz200 / zirawell｜mapi 被部分列表当广告域，但有反馈为核心 API，勿默认 REJECT
+# DOMAIN-SUFFIX,mapi.m.jd.com,REJECT
+# 来源：fmz200 / zirawell｜京东 HTTPDNS；REJECT 可能导致解析异常
+# DOMAIN,dns.jd.com,REJECT
+# IP-CIDR,101.124.19.122/32,REJECT,no-resolve
+# IP-CIDR6,2402:db40:5100:1011::5/128,REJECT,no-resolve
+
+[URL Rewrite]
+# 来源：zirawell / iKeLee / zbsdsb｜用途：调试诊断域
+^https?:\/\/\w{32}\.jddebug\.com\/diagnose\? - reject
+
+# 来源：zirawell jd.sgmodule｜用途：强制升级探测（非广告；若影响升级可注释）
+# ^https?:\/\/api\.m\.jd\.com\/openUpgrade - reject
+# ^https?:\/\/api\.m\.jd\.com\/api\/appPublishUpgrade - reject
+
+# ----- 旧协议开屏 reject · 对 15.9.50+ 通常无效（functionId 不在 URL）· 默认注释 -----
+# 来源：ddgksf2013 startingad.module；fmz200 Map Local functionId=start
+# ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(start|queryMaterialAdverts) - reject
+
+[Map Local]
+# ----- 辅路径：仅当 URL 仍带 functionId= 时命中；新协议多数请求会 miss -----
+# 来源：zirawell jd.sgmodule #!date=2026-05-20；iKeLee 京东去广告 #!date=2025-05-13
+# 用途：搜索底纹/热词、站内推送、素材广告、推荐位等 → 空 JSON
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(searchBoxWord|stationPullService|uniformRecommend[067]|queryMaterialAdverts|xview2Config|jdaPreDownload) data-type=text data="{}" status-code=200
+
+# 来源：zirawell｜用途：DSP 广告竞价回包（路径级，非整域）
+^https?:\/\/(bdsp-x|dsp-x)\.jd\.com\/adx\/ data-type=text data="{}" status-code=200
+
+# 来源：zirawell｜用途：小组件/发现红点等（可能影响小组件；默认注释）
+# ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(getWidget|widget|hybrid|jdDiscoveryRedPoint|apollo_style) data-type=text data="{}" status-code=200
+
+# 来源：fmz200｜用途：直播小窗（可能影响直播入口；默认注释）
+# ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=getWidgetV1052 data-type=text data="{}" status-code=200
+
+# ----- 旧协议开屏 Map Local · 默认注释（与下方脚本冲突时优先脚本）-----
+# 来源：fmz200（tiny-gif）/ blackmatrix7（脚本改 images）
+# ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start data-type=text data="{}" status-code=200
+
+[Script]
+# ----- 主路径（16.1.50 / ≥15.9.50 必用）：内容特征清洗，兼容明文与 base64 -----
+# 来源模块：https://raw.githubusercontent.com/zbsdsb/loon-adblock-plugins/main/JD_remove_ads_v2.lpx
+# 脚本来源：https://raw.githubusercontent.com/zbsdsb/loon-adblock-plugins/main/JD_remove_ads_v2.js
+# 基于：RuCu6 / Maasea / kelee 原插件逻辑；zbsdsb 2026-08-12 适配新协议并 HAR 验证
+# 开屏：响应含 images[] → 清空 + showTimesDaily=0（覆盖 start / startup，不依赖 URL functionId）
+# 首页：welcomeHome 类 floorList 删 bottomXview/float/photoCeiling 等
+# 我的/订单/物流：floors 按 mId 黑名单过滤弹窗与推广楼层
+# 无广告特征时原样放行（避免误伤 basicConfig 等大响应）
+京东-去广告-v2 = type=http-response,pattern=^https?:\/\/api\.m\.jd\.com\/client\.action,requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/zbsdsb/loon-adblock-plugins/main/JD_remove_ads_v2.js,timeout=30,script-update-interval=0
+
+# ----- 旧脚本对照（URL 匹配 functionId · 对 16.1.50 大概率失效）· 勿与上面同时启用 -----
+# 来源：zirawell https://raw.githubusercontent.com/zirawell/R-Store/main/Res/Scripts/AntiAd/jd.js
+# 来源：fmz200 / RuCu6 https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/jingdong/jingdong.js
+# 来源：iKeLee https://kelee.one/Resource/JavaScript/JD/JD_remove_ads.js
+# 京东-旧URL脚本 = type=http-response,pattern=^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(deliverLayer|getTabHomeInfo|myOrderInfo|orderTrackBusiness|personinfoBusiness|start|welcomeHome|readCustomSurfaceList),requires-body=1,max-size=2097152,script-path=https://raw.githubusercontent.com/zirawell/R-Store/main/Res/Scripts/AntiAd/jd.js,timeout=30,script-update-interval=0
+
+[MITM]
+# 仅业务网关 + DSP 广告主机；不加 jr.jd.com / pay / wallet / ms.jr.jd.com
+# api.m.jd.com：v2 脚本与 Map Local 必需
+# bdsp-x.jd.com, dsp-x.jd.com：Map Local adx；若只用 DOMAIN REJECT 可删
+hostname = %APPEND% api.m.jd.com, bdsp-x.jd.com, dsp-x.jd.com
