@@ -2,6 +2,10 @@
 
 ## 2026-11-10
 
+### 🐟 闲鱼 `xianyu.sgmodule` v1.2.1
+- 回退：停用 AMDC 调度拦截。实测拦截后 App 仍用内置/缓存策略连 `tls-goofish.dingtalk.com`，mtop 不走 `acs.m.goofish.com`，开屏照出，且 AMDC 反复重试。
+- 当前行为等同 v1.0.0：刚卸载重装时有效，切到长连接后开屏可能复现。
+
 ### 🐟 闲鱼 `xianyu.sgmodule` v1.2.0（测试中）
 - 新增 URL Rewrite：拒绝闲鱼 AMDC 调度 `http://<IP>/amdc/mobileDispatch?appkey=12431167`，期望 mtop（含开屏）回退到可 MitM 的 HTTPS 网关。
 - 只匹配闲鱼 appkey，不影响其他阿里系 App。若聊天异常，回退 v1.1.1。
