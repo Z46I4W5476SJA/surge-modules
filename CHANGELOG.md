@@ -1,5 +1,12 @@
 # 📜 CHANGELOG
 
+## 2026-11-10
+
+### 🐟 闲鱼 `xianyu.sgmodule` v1.1.0
+- 抓包发现：App 使用一段时间后，mtop 接口（含开屏 `splash.ads`）改走 ACCS 长连接 `tls-goofish.dingtalk.com`，无法 MitM，cacheAd 脚本不生效，冷启动和后台切回都会出现开屏。
+- 新增 `DOMAIN,tls-goofish.dingtalk.com,REJECT`，让 App 回退到 HTTPS mtop 网关。
+- 风险：长连接可能承载聊天消息推送，如消息不实时可注释该行。
+
 ## 2026-11-09
 
 ### 🛒 京东 `jd.sgmodule` v1.0.0

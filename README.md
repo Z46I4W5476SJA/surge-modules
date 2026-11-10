@@ -6,7 +6,7 @@
 
 | App | 模块 | 适配版本 | 模块版本 | 状态 | 安装链接 |
 |---|---|---|---|---|---|
-| 🐟 闲鱼 | [`modules/xianyu.sgmodule`](modules/xianyu.sgmodule) | 7.28.90 | 1.0.0 | ✅ 2026-11-09 已验证 | `https://raw.githubusercontent.com/Z46I4W5476SJA/surge-modules/main/modules/xianyu.sgmodule` |
+| 🐟 闲鱼 | [`modules/xianyu.sgmodule`](modules/xianyu.sgmodule) | 7.28.90 | 1.1.0 | ✅ 2026-11-10 更新 | `https://raw.githubusercontent.com/Z46I4W5476SJA/surge-modules/main/modules/xianyu.sgmodule` |
 | 🛒 京东 | [`modules/jd.sgmodule`](modules/jd.sgmodule) | 16.1.50 | 1.0.0 | ✅ 2026-11-09 已验证 | `https://raw.githubusercontent.com/Z46I4W5476SJA/surge-modules/main/modules/jd.sgmodule` |
 
 ## 📁 目录结构
