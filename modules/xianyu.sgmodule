@@ -1,6 +1,6 @@
 #!name=🐟 闲鱼去广告
-#!desc=闲鱼 iPhone 7.28.90｜v1.0.0｜2026-11-09 已验证：卸载重装后冷启动无开屏
-#!version=1.0.0
+#!desc=闲鱼 iPhone 7.28.90｜v1.1.0｜2026-11-10 拒绝 ACCS 长连接，逼开屏配置走 HTTP
+#!version=1.1.0
 #!category=去广告
 #!system=ios
 #!author=粥粥（规则整理自开源仓库，来源见注释）
@@ -31,6 +31,14 @@
 # 来源：ddgksf2013 / fmz200 / Walvez StartUpAds 均见 DOMAIN-SUFFIX,iyes.youku.com,REJECT
 # 用途：优酷 iyes 广告域（闲鱼内嵌相关投放常见）；整域名广告域，非 mtop 业务网关
 DOMAIN-SUFFIX,iyes.youku.com,REJECT
+
+# 来源：粥粥实测抓包 2026-11-10（Surge HTTP API /v1/requests/recent）
+# 现象：使用一段时间后，冷启动和后台切回都不再请求 acs.m.goofish.com，
+#       mtop 接口（含 splash.ads）改走 ACCS 长连接 tls-goofish.dingtalk.com，
+#       无法 MitM，cacheAd 脚本不执行，开屏复现。
+# 处理：拒绝该长连接，让 App 回退到 HTTPS mtop 网关，脚本重新生效。
+# 风险：长连接也可能承载聊天消息推送；如消息不实时，注释掉此行。
+DOMAIN,tls-goofish.dingtalk.com,REJECT
 
 [URL Rewrite]
 # 来源：atopsecret xianyu-ad-block.sgmodule（注释：creatives-assets 为广告专用目录，抓包实证）
