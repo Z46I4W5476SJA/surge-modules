@@ -1,6 +1,6 @@
 #!name=🐟 闲鱼去广告
-#!desc=闲鱼 iPhone 7.28.90｜v1.1.1｜2026-11-10 回滚长连接拒绝（会导致聊天加载失败）
-#!version=1.1.1
+#!desc=闲鱼 iPhone 7.28.90｜v1.2.0｜2026-11-10 拦截闲鱼 AMDC 调度，逼 mtop 走 HTTP（测试中）
+#!version=1.2.0
 #!category=去广告
 #!system=ios
 #!author=粥粥（规则整理自开源仓库，来源见注释）
@@ -41,6 +41,15 @@ DOMAIN-SUFFIX,iyes.youku.com,REJECT
 # DOMAIN,tls-goofish.dingtalk.com,REJECT
 
 [URL Rewrite]
+# 来源：粥粥实测抓包 2026-11-10；淘宝系模块常见做法是拦截 AMDC 调度接口
+# 用途：AMDC（阿里移动调度中心）下发长连接/网关策略。闲鱼启动时明文请求
+#       http://<IP>/amdc/mobileDispatch?appkey=12431167，拦掉后期望 mtop（含开屏）
+#       回退到可 MitM 的 HTTPS 网关，让 cacheAd 脚本重新生效。
+# 范围：只匹配闲鱼 appkey=12431167，不影响淘宝、支付宝等其他阿里系 App。
+# 风险：可能同样影响聊天长连接；若聊天异常，注释此行回退 v1.1.1。
+# 提示：App 可能缓存旧调度结果，生效后需划掉重开，必要时卸载重装。
+^http:\/\/[^\/]+\/amdc\/mobileDispatch\?appkey=12431167 - reject
+
 # 来源：atopsecret xianyu-ad-block.sgmodule（注释：creatives-assets 为广告专用目录，抓包实证）
 # 用途：开屏/创意素材 CDN；按路径拦，非整 alicdn
 ^https?://ossgw\.alicdn\.com/creatives-assets/ - reject
